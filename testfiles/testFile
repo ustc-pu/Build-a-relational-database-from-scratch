@@ -1,0 +1,10 @@
+Drop database test1
+create database test1
+use database test1
+CREATE TABLE Students (id INT PRIMARY KEY, Studentname VARCHAR(100), ZIPCODE INT)
+insert into Students (id,Studentname,ZIPCODE) values (1,'foo',90091), (3,'bar',90083), (4,'foobar',90080), (6,'Tom',90096), (7,'Lucy',90098), (9,'Patricia',90089),(10,'Barbara',90095)
+CREATE TABLE Courses (id INT PRIMARY KEY, CourseNo VARCHAR(50))
+insert into Courses (id, CourseNo) values (1,'ECE141A'), (3,'ECE141B'), (4,'CSE100'), (6,'CSE101'), (7,'ECE100')
+select * from Students ORDER BY ZIPCODE
+Select * from Courses order by CourseNo limit 3
+quit
