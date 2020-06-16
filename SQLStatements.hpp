@@ -18,6 +18,7 @@
 #include "Row.hpp"
 #include "Filters.hpp"
 #include "Join.hpp"
+#include "Tokenizer.hpp"
 
 namespace ECE141 {
 
@@ -50,6 +51,21 @@ namespace ECE141 {
     bool checkDefault(std::vector<Token> &row);
     
     std::string name;
+    std::vector<Attribute> attributes;
+  };
+
+  class alterTableStatement : public createTableStatement {
+  public:
+    alterTableStatement(SQLProcessor& aProcessor);
+    StatusResult parse(Tokenizer& aTokenizer);
+    StatusResult run(std::ostream& anOutput);
+    
+  protected:
+    StatusResult parseAttr(Tokenizer& aTokenizer);
+    Attribute parseRow(std::vector<Token> &row);
+    
+    std::string name;
+    Keywords op;
     std::vector<Attribute> attributes;
   };
 
@@ -131,6 +147,7 @@ protected:
   std::string orderByAttr;
   uint32_t limitNum;
   Expressions whereContent;
+  StatusResult errorInfo;
 };
 
 class updateSatatement : public selectSatatement {
@@ -156,6 +173,7 @@ protected:
   StatusResult parseIdentifier(Tokenizer &aTokenizer);
   std::string name;
 };
+
 
 }
 

@@ -46,7 +46,7 @@ public:
   Index(const Index& anIndex);
   
   virtual ~Index();
-  
+  Index operator= (Index& anIndex);
   ValueMap&           getList() {return list;}
   void                setChanged(bool aValue=true) {changed=aValue;}
   bool                isChanged() {return changed;}

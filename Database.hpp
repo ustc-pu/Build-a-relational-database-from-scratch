@@ -104,6 +104,7 @@ public:
   StatusResult saveDatabase();
   
   StatusResult createTable(Schema* aSchema);
+  StatusResult alterTable(std::string tableName, const Attribute& anAttr);
   StatusResult showTables(std::ostream &anOutput);
   StatusResult describeTable(std::string tableNmae, std::ostream &anOutput);
   StatusResult dropTable(std::string tableName);
@@ -134,8 +135,8 @@ protected:
   std::string     name;
   Storage         storage;
   SchemaList      schemas;
-  IndexList       indexes;
-  HashList        ids;
+  IndexList       indexes; //tableIdtoIndexObjMap
+  HashList        ids; //tableIdList
   IndexBlockMap   indexBlockMap;
 };
 }

@@ -28,6 +28,7 @@ static std::map<int, std::string> theErrorMessages = {
   {ECE141::unknownTable,   "Unknown table"},
   {ECE141::unknownAttribute, "Unknown attribute"},
   {ECE141::noDatabaseSpecified, "No database specified"},
+  {ECE141::joinTypeExpected, "join Type Expected"},
   {ECE141::unknownError,   "Unknown error"}
 };
 
@@ -54,10 +55,24 @@ ECE141::StatusResult handleInput(std::istream &aStream, ECE141::CommandProcessor
   return theResult;
 }
 
+template <typename Child>
+struct Base{
+  void interface() {
+    static_cast<Child*>(this)->implementation();
+  }
+};
+
+struct Derived : Base<Derived> {
+  void implementation() {
+    std::cout << "derived implentation\n";
+  }
+};
+
 //----------------------------------------------
 
 int main(int argc, const char * argv[]) {
-  
+  Derived d;
+  d.interface();
   
   /* Reader Test
   const char* path = ECE141::StorageInfo::getDefaultStoragePath();
@@ -69,6 +84,7 @@ int main(int argc, const char * argv[]) {
   std::clog << "Path Exist: " << reader.exists(path) << "\n";
   reader.each(test, ".txt");
   */
+
 
 
   ECE141::DBProcessor       dbProcessor;

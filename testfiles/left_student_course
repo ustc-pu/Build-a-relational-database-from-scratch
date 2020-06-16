@@ -1,3 +1,4 @@
+Drop database Leftstudentcourse
 create database Leftstudentcourse
 use database Leftstudentcourse
 CREATE TABLE Students (Pid INT PRIMARY KEY, Studentname VARCHAR(100), ZIPCODE INT)

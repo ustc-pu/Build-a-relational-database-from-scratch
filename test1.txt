@@ -1,0 +1,7 @@
+drop database final
+CREATE DATABASE final
+use database final
+CREATE TABLE Names (id integer AUTO_INCREMENT PRIMARY KEY, first_name VARCHAR(30) NOT NULL)
+INSERT INTO Names (first_name) VALUES ("savya"), ("chandhini"), ("rickg")
+SELECT * from Names order by first_name
+quit

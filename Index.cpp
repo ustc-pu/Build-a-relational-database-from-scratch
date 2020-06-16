@@ -27,6 +27,16 @@ Index::Index(const Index& anIndex) : field(anIndex.field), type(anIndex.type), s
   list = anIndex.list;
 }
 
+Index Index::operator=(Index& anIndex) {
+  field = anIndex.field;
+  type = anIndex.type;
+  schemaId = anIndex.schemaId;
+  changed = anIndex.changed;
+  blockNum = anIndex.blockNum;
+  list = anIndex.list;
+  return *this;
+}
+
 
 Index::~Index(){
   list.clear();

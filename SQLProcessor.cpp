@@ -57,6 +57,10 @@ namespace ECE141 {
     return new updateSatatement(aProcessor);
   }
   
+  Statement* alterTableStatementFactory(SQLProcessor &aProcessor) {
+    return new alterTableStatement(aProcessor);
+  }
+  
   // USE: factory to create statement based on given tokens...
   Statement* SQLProcessor::getStatement(Tokenizer& aTokenizer) {
     static std::map<Keywords, StatementFactory> factories = {
@@ -69,6 +73,7 @@ namespace ECE141 {
       {Keywords::delete_kw, deleteRowStatementFactory},
       {Keywords::select_kw, selectStatementFactory},
       {Keywords::update_kw, updateStatementFactory},
+      {Keywords::alter_kw, alterTableStatementFactory},
     };
         
     if (aTokenizer.size()) {
@@ -102,6 +107,20 @@ namespace ECE141 {
     }
     return StatusResult(noDatabaseSpecified);
   }
+
+StatusResult SQLProcessor::alterTable(std::string tableName, Attribute& attr, std::ostream &anOutput) {
+  StatusResult theResult;
+  if (Database* curDB = getActiveDatabase()) {
+//    StatusResult theResult = curDB->createTable(aSchema);
+    theResult = curDB->alterTable(tableName, attr);
+    if (theResult) {
+      anOutput << "alter Table " << tableName << " ok\n";
+      return theResult;
+    }
+    return theResult;
+  }
+  return StatusResult(noDatabaseSpecified);
+}
 
 
   StatusResult SQLProcessor::dropTable(std::string &aName, std::ostream &anOutput) {

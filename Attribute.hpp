@@ -52,7 +52,7 @@ namespace ECE141 {
     Attribute&  setValueBool(bool val) {value = val; return *this;};
     Attribute&  setAutoIncreVal(uint32_t val) {nextAutoIncreVal = val; return *this;};
     
-    const std::string&  getName() {return name;}
+    const std::string&  getName() const {return name;}
     DataType            getType() {return type;}
     std::string         getTypeString();
     int                 getLength() {return length;};

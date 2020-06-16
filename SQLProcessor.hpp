@@ -31,6 +31,7 @@ namespace ECE141 {
     virtual StatusResult  interpret(Statement &aStatement);
     
     StatusResult createTable(Schema* aSchema, std::ostream &anOutput);
+    StatusResult alterTable(std::string tableName, Attribute& attr, std::ostream &anOutput);
     StatusResult useTable(std::string &aName, std::ostream &anOutput);
     StatusResult dropTable(std::string &aName, std::ostream &anOutput);
     StatusResult describeTable(std::string &aName, std::ostream &anOutput);

@@ -19,6 +19,76 @@ StatusResult SQLStatement::parse(Tokenizer& aTokenizer){
 StatusResult SQLStatement::run(std::ostream& anOutput){
   return StatusResult();
 }
+//--------------alter table------------
+
+alterTableStatement::alterTableStatement(SQLProcessor& aProcessor) : createTableStatement(aProcessor){}
+
+StatusResult alterTableStatement::parse(Tokenizer& aTokenizer) {
+  
+  if(aTokenizer.skipIf(Keywords::alter_kw)) {
+    if(aTokenizer.skipIf(Keywords::table_kw)) {
+      name = aTokenizer.current().data; //get table name;
+      aTokenizer.next();
+      op = aTokenizer.current().keyword;
+      aTokenizer.next();
+      parseAttr(aTokenizer);
+      return StatusResult();
+    }
+  }
+  return StatusResult(syntaxError);
+}
+
+StatusResult alterTableStatement::parseAttr(Tokenizer& aTokenizer) {
+  std::vector<Token> row;
+//  aTokenizer.next(); // eat left-parn
+  while (aTokenizer.remaining() > 1) {
+    while (aTokenizer.more()) {
+      row.push_back(aTokenizer.current());
+      aTokenizer.next();
+    }
+    Attribute attr = parseRow(row);
+    attributes.push_back(attr);
+    row.clear();
+    aTokenizer.next();
+  }
+//  aTokenizer.next(); // eat right-parn
+  return StatusResult();
+}
+
+Attribute alterTableStatement::parseRow(std::vector<Token> &row) {
+  std::string name = row[0].data;
+  DataType type = checkType(row[1].data);
+  Attribute attr(name, type);
+  attr.setNull(checkNullable(row));
+  attr.setPrimaryKey(checkPrimaryKey(row));
+  attr.setAutoIncrement(checkAutoIncrement(row));
+  attr.setDefault(checkDefault(row));
+  
+  if (type == DataType::varchar_type) {
+    attr.setLength(checkLength(row[3].data));
+  }
+  
+  if (attr.isDefault()) {
+    int index = findDefaultValIndex(row);
+    if (attr.getType() == DataType::int_type) {
+      attr.setValueInt(std::stoi(row[index].data.c_str()));
+    } else if (attr.getType() == DataType::float_type) {
+      attr.setValueFloat(std::stof(row[index].data.c_str()));
+    } else if (attr.getType() == DataType::bool_type) {
+      if (Helpers::caseInSensStringCompare(row[index].data, "true")) {
+        attr.setValueBool(true);
+      } else {
+        attr.setValueBool(false);
+      }
+    }
+  }
+  return attr;
+}
+
+StatusResult alterTableStatement::run(std::ostream& anOutput) {
+  return processor.alterTable(name, attributes[0], anOutput);
+
+}
 
 // create table statement //////////////////////////////////////////////////////////////////////////////
 // create table statement //////////////////////////////////////////////////////////////////////////////
@@ -98,7 +168,7 @@ Attribute createTableStatement::parseRow(std::vector<Token> &row) {
 }
 
 DataType createTableStatement::checkType(std::string input) {
-  if (Helpers::caseInSensStringCompare(input, "int")) {
+  if (Helpers::caseInSensStringCompare(input, "int") || Helpers::caseInSensStringCompare(input, "integer")) {
     return DataType::int_type;
   } else if (Helpers::caseInSensStringCompare(input, "bool") || Helpers::caseInSensStringCompare(input, "boolean")) {
     return DataType::bool_type;
@@ -546,11 +616,9 @@ selectSatatement::selectSatatement(SQLProcessor &aProcesor) : SQLStatement(aProc
 
 StatusResult selectSatatement::parse(Tokenizer &aTokenizer) {
   //select fist_name from Users where age<50 order by last_name limit 3
-  if(Keywords::select_kw == aTokenizer.current().keyword) {
-    aTokenizer.next();
+  if(aTokenizer.skipIf(Keywords::select_kw)) {
     if(parseAttrlist(aTokenizer)) {
-      if (Keywords::from_kw == aTokenizer.current().keyword) {
-        aTokenizer.next();
+      if (aTokenizer.skipIf(Keywords::from_kw)) {
         if (aTokenizer.more()) {
           name = aTokenizer.current().data;
           aTokenizer.next();
@@ -562,12 +630,16 @@ StatusResult selectSatatement::parse(Tokenizer &aTokenizer) {
             if (result.code != Errors::noError) {
               return result;
             }
+          } else {
+//            errorInfo = StatusResult(joinTypeExpected);
           }
           
           // Parse optional
           std::vector<Keywords> optionalType = {Keywords::where_kw, Keywords::order_kw, Keywords::limit_kw};
           if (std::find(optionalType.begin(), optionalType.end(), aTokenizer.current().keyword) != optionalType.end()) {
-            result = parseOptional(aTokenizer);
+            errorInfo = parseOptional(aTokenizer);
+//            result = parseOptional(aTokenizer);
+            result = errorInfo;
           }
           
           return result;
@@ -627,9 +699,6 @@ StatusResult selectSatatement::parseOptional(Tokenizer &aTokenizer) {
 
 StatusResult selectSatatement::parseAttrlist(Tokenizer &aTokenizer) {
   // select all attributes
-  if(selectAll) {
-    std::clog << "in parseAttrlist, selectAll is true\n";
-  }
   if("*" == aTokenizer.current().data) {
     selectAll = true;
     aTokenizer.next();
@@ -647,9 +716,6 @@ StatusResult selectSatatement::parseAttrlist(Tokenizer &aTokenizer) {
     }
     attrlist.push_back(aTokenizer.current().data);
     aTokenizer.next();
-  }
-  if(selectAll) {
-    std::clog << "in parseAttrlist, after adding attr, selectAll is true\n";
   }
   
   return StatusResult();
@@ -713,6 +779,9 @@ StatusResult selectSatatement::parseLimit(Tokenizer &aTokenizer) {
 }
 
 StatusResult selectSatatement::run(std::ostream &anOutput) {
+  if(noError != errorInfo.code) {
+    return errorInfo;
+  }
   return processor.selectRow(name, attrlist, selectAll, orderByAttr, limitNum, whereContent, joins, anOutput); 
 }
 

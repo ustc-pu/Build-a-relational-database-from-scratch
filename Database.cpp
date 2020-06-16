@@ -111,6 +111,46 @@ namespace ECE141 {
     return StatusResult{tableExists};
   }
 
+StatusResult Database::alterTable(std::string tableName, const Attribute& anAttr) {
+  StatusResult theResult;
+  int schemaIndex = getSchemaIndexByName(tableName);
+  if( schemaIndex != -1) {
+    Schema& curSchema = schemas[schemaIndex];
+    curSchema.addAttribute(anAttr);
+    curSchema.setChange(true);
+    // get all the row of this table
+    //insert this coloum into the row
+    //need more time
+    Index curIndex;
+    uint32_t tableHashId = Helpers::hashString(tableName.c_str());
+    for(auto indexPair : indexes) {
+      if(tableHashId == indexPair.first) {
+        curIndex = indexPair.second;
+        break;
+      }
+    }
+    for(auto pair : curIndex.getList()) {
+      Row aRow;
+      StorageBlock rowBlock;
+      theResult = storage.readBlock(rowBlock, pair.second);
+      std::string res(rowBlock.data);
+      std::stringstream aStream(res);
+      aRow.decode(aStream);
+      std::string attrName = anAttr.getName();
+//      std::string name = static_cast<std::string>(anAttr.getName());
+      ValueType val = std::string("null");
+      std::pair<std::string, ValueType> aPair;
+      aPair.first = attrName;
+      aPair.second = val;
+      aRow.add(aPair);
+      storage.save(aRow, pair.second);
+    }
+  } else {
+    theResult = StatusResult(unknownTable);
+  }
+  return theResult;
+}
+
   StatusResult Database::showTables(std::ostream &anOutput) {
     showTableView view(name, schemas);
     view.show(anOutput);
@@ -246,13 +286,18 @@ namespace ECE141 {
       }
       
       if (selectAll) {
-        std::clog << "selecting ALL\n";
         AttributeList list = getSchema(getSchemaIndexByName(aName)).getAttributes();
         for (auto attr : list) {
           attrlist.push_back(attr.getName());
         }
-        for(auto attrName : attrlist) {
-          std::clog << attrName << "\n";
+        //add joinee attrs to attrlist, check if same name
+        if(joins.size() > 0) {
+          AttributeList joineeList = getSchema(getSchemaIndexByName(joins[0].table)).getAttributes();
+          for (auto attr : joineeList) {
+            if(!std::count(attrlist.begin(), attrlist.end(), attr.getName())) {
+              attrlist.push_back(attr.getName());
+            }
+          }
         }
       }
       
